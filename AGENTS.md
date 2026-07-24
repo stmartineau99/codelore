@@ -13,16 +13,34 @@ If an instruction of the repository disagrees with a rule below, the rule below 
 ## Environment
 
 - Never install packages using `pip install` or `micromamba install`. The environment is managed by the user.
-- Always run Python commands inside the `super` conda environment: prefix with `micromamba run -n super` or activate first with `micromamba activate super`.
+- By default run Python commands inside the `super` conda environment: prefix with `micromamba run -n super` or activate first with `micromamba activate super`. You can override this behavior when the context requires a different environment (for example, `synapse-net`)
 
 ## Testing
 
-- Always validate changes by running the actual scripts in `scripts/` with real data and real checkpoints where available. Do not use inline Python smoke tests.
+- Write unit tests for new software features. Do not use inline Python smoke tests. 
 
 ## Compatibility
 
-- Do not add backward compatibility when you add a feature. Write only the new form. Do not keep an old name, an alias, a deprecation warning, or a fallback path for old callers. Change every call site instead.
-- Keep backward compatibility only when the user asks for it.
+- Do not assume that legacy behavior must remain.
+- Prefer a clean interface for new work, unreleased work, and redesigns.
+- Remove obsolete compatibility code in the task scope when no compatibility contract requires it.
+- Follow an explicit user request or repository policy that requires compatibility.
+- Ask for guidance if the correct choice is unclear and the change can break:
+  - a published API;
+  - stored data;
+  - a wire protocol;
+  - compatibility for known downstream users.
+- Do not remove unrelated compatibility code.
+
+## Comments and Documentation
+
+- Do not add a comment or docstring only because you added or changed code.
+- Prefer clear names, types, interfaces, and code structure.
+- Add prose only when it explains a contract, intent, rationale, invariant, constraint, unit, external issue, or non-obvious risk.
+- Do not narrate control flow, restate a signature, repeat code, or add generic introductions and conclusions.
+- Keep required public API documentation, license text, generated-file markers, directives, and useful examples.
+- Keep necessary prose concise. Prefer one short line for the non-obvious "why". A comment that runs to several lines is almost always too long; cut it down.
+- Write the prose you keep in Simplified Technical English. See the `simple-technical-english` skill for the full profile.
 
 ## Code quality
 
@@ -31,13 +49,10 @@ If an instruction of the repository disagrees with a rule below, the rule below 
 - When adding a `# noqa` comment, never include the error type: write `# noqa`, not `# noqa: E402`.
 
 ## Code style
-
-- Keep code comments minimalistic: a comment should state what is needed and no more, not narrate a story. Prefer one short line explaining the non-obvious "why". Avoid multi-sentence explanations, background, alternatives considered, or restating what the code already says. If a comment runs to several lines, it is almost always too long - cut it down.
 - No section markers in code: no heavy separator line like `# ---------------------------------------------------------------------------`, and no inline label like `# -- encoder --`.
 - No excessive space-padding anywhere for visual column alignment: inline comments, docstring argument lists, dict entries, tuple/list elements, printed and logged output, etc. Use single spaces throughout, and always exactly one space after a colon. Write `x = foo(x)  # (B, N, D)`, not `x = foo(x)     # (B, N, D)`; write `"key": value`, not `"key":    value`; write `x: (B, C, H, W)`, not `x:          (B, C, H, W)`; write `print(f"Cosine Similarity: {cos_sim:.6f}")`, not `print(f"Cosine Similarity:   {cos_sim:.6f}")`. You break this rule most often when you write several labels one after another. Read back every block of labels, and delete the padding.
 - Never use the Unicode arrow `→`. Use `->` instead.
 - Never use the em dash `—`. Use `-` instead.
-- No double spaces after punctuation in prose (docstrings, comments, strings): write `CVPR 2026. https://...`, not `CVPR 2026.  https://...`.
 - Never name module-level variables with a leading underscore.
 - Don't embed leading whitespace in string literals for output indentation: write `print(f"Key: {value}")`, not `print(f"  Key: {value}")`.
 - Organize the imports of a file into blocks that one blank line separates. The blocks come in this order: the standard library, the scientific utilities, the GUI packages, `torch`, the packages that the user develops, and the current project. Give every package of the user its own block. Order these blocks from the most general package to the most specific one: `elf`, then `torch_em`, then `micro_sam`. A package that contributes more than one import line also gets its own block. Inside a block, put the shortest line first and the longest line last:
@@ -81,3 +96,14 @@ If an instruction of the repository disagrees with a rule below, the rule below 
        + c + d)
   ```
 - This applies to `argparse` too. Write `parser.add_argument("--foo", default=x, help="...")` on one line.
+
+## Behavior
+
+- Apply YAGNI to new features. Work down this ladder and stop at the first step that solves the task:
+  1. Does this need to exist? If no, skip it.
+  2. Already in this codebase? Reuse it, do not rewrite.
+  3. Does the standard library do it? Use it.
+  4. Is there a native platform feature? Use it.
+  5. Does an installed dependency do it? Use it.
+  6. Does one line do it? Write one line.
+  7. Only then, write the minimum that works.
